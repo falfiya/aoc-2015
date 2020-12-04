@@ -44,17 +44,17 @@ let startingMap1 = Map.empty.Add((0, 0), 2u) // since there are 2 santas now
 
 let state1 = (((0, 0), (0, 0)), startingMap1)
 
-let isEven x = (x % 2) = 0
-let isOdd = isEven >> not
+let even x = (x % 2) = 0
+let odd = even >> not
 
-let filterOnIndexIf fn =
+let filterOnIndex fn =
    Array.indexed
    >> Array.filter (fst >> fn)
    >> Array.map snd
 
-let santaInstructions1 = file |> filterOnIndexIf isEven
+let santaInstructions1 = file |> filterOnIndex even
 
-let robotInstructions1 = file |> filterOnIndexIf isOdd
+let robotInstructions1 = file |> filterOnIndex odd
 
 let (_, mapAfterSanta1) =
    santaInstructions1
