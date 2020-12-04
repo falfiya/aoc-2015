@@ -13,7 +13,7 @@ let increment (loc: Location) (map: SantaMap) =
    | Some count -> map.Remove(loc) |> ignore; map.Add(loc, count + 1u)
    | None -> map.Add(loc, 1u)
 
-let santaWalk (santa: Location, map: SantaMap) (arrow: char) =
+let walk (santa: Location, map: SantaMap) (arrow: char) =
    let (x, y) = santa;
    let newSanta =
       match arrow with
@@ -28,14 +28,7 @@ let startingMap0: SantaMap = Map.empty.Add((0, 0), 1u)
 
 let (finalLoc0, finalMap0) =
    file
-   |> Array.fold santaWalk ((0, 0), startingMap0)
-
-(*
-finalLoc
-|> string
-|> (+) "Santa ended his trip at "
-|> Console.WriteLine
-*)
+   |> Array.fold walk ((0, 0), startingMap0)
 
 finalMap0
 |> Map.toSeq
@@ -47,29 +40,30 @@ finalMap0
 |> (++) " houses that had at least one present."
 |> Console.WriteLine
 
-let robotWalk (robot: Location, map: SantaMap) (arrow: char) =
-   let (x, y) = robot;
-   let newRobot =
-      match arrow with
-      | '^' -> (x, y - 1)
-      | '>' -> (x - 1, y)
-      | 'v' -> (x, y + 1)
-      | '<' -> (x + 1, y)
-      | _ -> robot
-   (newRobot, increment newRobot map)
-
-let bothWalk ((santa: Location, robot: Location), map0: SantaMap) arrow =
-   let (newSanta, map1) = santaWalk (santa, map0) arrow
-   let (newRobot, map2) = robotWalk (robot, map1) arrow
-   ((newSanta, newRobot), map2)
-
 let startingMap1 = Map.empty.Add((0, 0), 2u) // since there are 2 santas now
 
 let state1 = (((0, 0), (0, 0)), startingMap1)
 
-let (finalLoc1, finalMap1) = file |> Array.fold bothWalk state1
+let isEven x = (x % 2) = 0
+let isOdd = isEven >> not
 
-finalMap1
+let filterOnIndexIf fn =
+   Array.indexed
+   >> Array.filter (fst >> fn)
+   >> Array.map snd
+
+let santaInstructions1 = file |> filterOnIndexIf isEven
+
+let robotInstructions1 = file |> filterOnIndexIf isOdd
+
+let (_, mapAfterSanta1) =
+   santaInstructions1
+   |> Array.fold walk ((0, 0), startingMap1)
+let (_, mapAfterRobot1) =
+   robotInstructions1
+   |> Array.fold walk ((0, 0), mapAfterSanta1)
+
+mapAfterRobot1
 |> Map.toSeq
 |> Seq.map snd
 |> Seq.filter (fun count -> count > 0u)
