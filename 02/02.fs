@@ -1,4 +1,4 @@
-﻿open System
+open System
 
 let InputFile = "input.txt"
 
@@ -38,7 +38,7 @@ let WrappingPaperNeeded (b: Box): int<Ft^2> =
 
 let flip f a b = f b a
 
-let append a = flip (+) a
+let (++) a = flip (+) a
 
 let stringft2 (sqft: int<Ft^2>) = (string sqft) + " ft²"
 
@@ -48,7 +48,7 @@ boxes
 |> Array.sumBy WrappingPaperNeeded
 |> stringft2
 |> (+) "Part 1: The elves need "
-|> append " of wrapping paper."
+|> (++) " of wrapping paper."
 |> Console.WriteLine
 
 let Volume (b: Box): int<Ft^3> = b.Width * b.Height * b.Length
@@ -67,6 +67,6 @@ boxes
 |> Array.sumBy RibbonNeeded
 |> stringft
 |> (+) "Part 2: The elves need "
-|> append " of ribbon."
+|> (++) " of ribbon."
 |> Console.WriteLine
 
