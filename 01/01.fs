@@ -30,6 +30,7 @@ let main() =
    |> append " by the end of the route. "
    |> Console.WriteLine
 
+   // part 2
    chars
    |> Array.indexed
    |> Array.mapFold (fun acc (idx, char) -> acc + (parenToInt char) |> aaaa idx) 0
