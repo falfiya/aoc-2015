@@ -4,7 +4,7 @@ let secretKey = "iwrupvqb"
 
 let md5 = Security.Cryptography.MD5.Create()
 
-let inline md5Hash (input : string) =
+let md5Hash (input : string) =
    input
    |> Text.Encoding.ASCII.GetBytes
    |> md5.ComputeHash
@@ -15,7 +15,7 @@ let startsWithFiveZeros (bytes: byte[]) =
 let startsWithSixZeros (bytes: byte[]) =
    bytes.[0] ||| bytes.[1] ||| bytes.[2] = 0uy
 
-let inline makeKey (i: uint) = secretKey + string i
+let makeKey (i: uint) = secretKey + string i
 
 let mineWith predicate =
    let rec mine = fun (i: uint) ->
