@@ -9,15 +9,16 @@ module String =
    let contains (needle: string) (haystack: string) = haystack.Contains(needle)
 
 module Array =
-   let mapOn (ary: 'T[]) (mapping: 'T -> 'U) = Array.map mapping ary
+   let includes = (=) >> Array.exists
 
-let vowelPredicates = [| 'a'; 'e'; 'i'; 'o'; 'u' |] |> Array.map String.includes
+let vowels = [| 'a'; 'e'; 'i'; 'o'; 'u' |]
+
+let isVowel = Array.includes >> apply vowels
 
 let hasAtLeastThreeVowels =
-   apply
-   >> Array.mapOn vowelPredicates
-   >> Array.filter id
-   >> Array.length
+   isVowel
+   |> String.filter
+   >> String.length
    >> atLeast 3
 
 let isDouble (a, b) = a = b
@@ -30,5 +31,27 @@ let hasDouble: string -> bool =
 // let's try this one differently
 let badWords = [| "ab"; "cd"; "pq"; "xy" |]
 
-let hasBadword: string -> bool =
-   Array.mapOn badWords 
+let hasBadWords =
+   flip String.contains
+   >> Array.exists
+   >> apply badWords
+
+let hasNoBadWords = hasBadWords >> not
+
+let nicePredicates = [|
+   hasAtLeastThreeVowels
+   hasDouble
+   hasNoBadWords
+|]
+
+let isNice =
+   apply
+   >> Array.forall
+   >> apply nicePredicates
+
+IO.File.ReadAllLines "words.txt"
+|> Array.filter isNice
+|> Array.length
+|> string
+|> (+) "There are "
+|> Console.WriteLine
