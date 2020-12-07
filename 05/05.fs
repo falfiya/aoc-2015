@@ -9,49 +9,90 @@ module String =
    let contains (needle: string) (haystack: string) = haystack.Contains(needle)
 
 module Array =
-   let includes = (=) >> Array.exists
+   // stupid type system
+   // let includes = (=) >> Array.exists
+   let includes (what: 'T) = Array.exists ((=) what)
 
-let vowels = [| 'a'; 'e'; 'i'; 'o'; 'u' |]
+let lines = IO.File.ReadAllLines (__SOURCE_DIRECTORY__ + "/words.txt")
 
-let isVowel = Array.includes >> apply vowels
+module PuzzleOne =
+   let vowels = [| 'a'; 'e'; 'i'; 'o'; 'u' |]
 
-let hasAtLeastThreeVowels =
-   isVowel
-   |> String.filter
-   >> String.length
-   >> atLeast 3
+   let isVowel = Array.includes >> apply vowels
 
-let isDouble (a, b) = a = b
+   let hasAtLeastThreeVowels =
+      isVowel
+      |> String.filter
+      >> String.length
+      >> atLeast 3
 
-let hasDouble: string -> bool =
-   List.ofSeq
-   >> Seq.pairwise
-   >> Seq.exists isDouble
+   let isDouble (a, b) = a = b
 
-// let's try this one differently
-let badWords = [| "ab"; "cd"; "pq"; "xy" |]
+   let hasDouble: string -> bool =
+      List.ofSeq
+      >> Seq.pairwise
+      >> Seq.exists isDouble
 
-let hasBadWords =
-   flip String.contains
-   >> Array.exists
-   >> apply badWords
+   // let's try this one differently
+   let badWords = [| "ab"; "cd"; "pq"; "xy" |]
 
-let hasNoBadWords = hasBadWords >> not
+   let hasBadWords =
+      flip String.contains
+      >> Array.exists
+      >> apply badWords
 
-let nicePredicates = [|
-   hasAtLeastThreeVowels
-   hasDouble
-   hasNoBadWords
-|]
+   let hasNoBadWords = hasBadWords >> not
 
-let isNice =
-   apply
-   >> Array.forall
-   >> apply nicePredicates
+   let nicePredicates = [|
+      hasAtLeastThreeVowels
+      hasDouble
+      hasNoBadWords
+   |]
 
-IO.File.ReadAllLines "words.txt"
-|> Array.filter isNice
-|> Array.length
-|> string
-|> (+) "There are "
-|> Console.WriteLine
+   let isNice =
+      apply
+      >> Array.forall
+      >> apply nicePredicates
+
+   lines
+   |> Array.filter isNice
+   |> Array.length
+   |> string
+   |> (+) "There are "
+   |> ((+) >> (|>) " nice words.")
+   |> Console.WriteLine
+
+// https://stackoverflow.com/a/36570457/
+module Seq =
+   let skipSafe count source =
+      source
+      |> Seq.indexed
+      |> Seq.filter (fst >> (<=) count)
+      |> Seq.map snd
+
+
+let (%&) fn0 fn1 a = (fn0 a) && (fn1 a)
+
+module PuzzleTwo =
+   let hasDouble (s: string) =
+      let pairs = s |> Seq.pairwise |> Seq.toArray
+      let max = pairs.Length - 2
+      let rec loop i =
+         i < max && (Array.includes pairs.[i] pairs.[i + 2..] || loop (i + 1))
+      loop 0
+
+   let hasOneSurrounded (s: string) =
+      let chars = s |> Seq.toArray
+      let max = chars.Length - 3
+      let rec loop i = i < max && (chars.[i] = chars.[i + 2] || loop (i + 1))
+      loop 0
+
+   let isNicer = hasDouble %& hasOneSurrounded
+
+   lines
+   |> Array.filter isNicer
+   |> Array.length
+   |> string
+   |> (+) "There are "
+   |> ((+) >> (|>) " nicer words.")
+   |> Console.WriteLine
