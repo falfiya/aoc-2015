@@ -1,5 +1,7 @@
 # Advent of Code - 2015
 
+Sister Project: [@j1ng3r/avdent-of-codh-2015](https://github.com/j1ng3r/avdent-of-codh-2015)
+
 ![](icon.png)
 
 I decided that I wanted to learn Microsoft OCaml this time.

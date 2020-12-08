@@ -1,0 +1,12 @@
+<Project Sdk="Microsoft.NET.Sdk">
+   <PropertyGroup>
+      <OutputType>Exe</OutputType>
+      <TargetFramework>net5.0</TargetFramework>
+   </PropertyGroup>
+
+   <ItemGroup>
+      <Compile Include="06.shared.fs"/>
+      <Compile Include="06.puzzle1.fs"/>
+      <Compile Include="06.main.fs"/>
+   </ItemGroup>
+ </Project>
