@@ -74,18 +74,25 @@ module Seq =
 let (%&) fn0 fn1 a = (fn0 a) && (fn1 a)
 
 module PuzzleTwo =
-   let hasDouble (s: string) =
-      let pairs = s |> Seq.pairwise |> Seq.toArray
-      let max = pairs.Length - 2
-      let rec loop i =
-         i < max && (Array.includes pairs.[i] pairs.[i + 2..] || loop (i + 1))
-      loop 0
+   let rec _hasDouble (ary: 'T array) =
+      if ary.Length < 3 then
+         false
+      elif Array.includes ary.[0] ary.[2..] then
+         true
+      else
+         _hasDouble ary.[1..]
 
-   let hasOneSurrounded (s: string) =
-      let chars = s |> Seq.toArray
-      let max = chars.Length - 3
-      let rec loop i = i < max && (chars.[i] = chars.[i + 2] || loop (i + 1))
-      loop 0
+   let hasDouble = Seq.pairwise >> Seq.toArray >> _hasDouble
+
+   let rec _hasOneSurrounded (ary: 'T array) =
+      if ary.Length < 3 then
+         false
+      elif ary.[0] = ary.[2] then
+         true
+      else
+         _hasOneSurrounded ary.[1..]
+
+   let hasOneSurrounded = Seq.toArray >> _hasOneSurrounded
 
    let isNicer = hasDouble %& hasOneSurrounded
 
