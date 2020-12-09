@@ -1,10 +1,22 @@
 module Shared
 open System
 
-module Op =
-   type OpCode = On | Off | Toggle
+module Array =
+   let fillet pred = pred |> Array.filter >> Array.length
 
-   type Op = { Code: OpCode; Start: (int * int); Finish: (int * int) }
+module Array2D =
+   // http://www.fssnip.net/oq/title/Array2D-to-one-dimension
+   let flat matrix =
+      let maxX = Array2D.length1 matrix - 1
+      let maxY = Array2D.length2 matrix - 1
+      [|for x in 0..maxX do
+         for y in 0..maxY do
+            yield matrix.[x, y]|]
+
+module Op =
+   type Code = On | Off | Toggle
+
+   type Op = { Code: Code; Start: (int * int); Finish: (int * int) }
 
    let locFromString (s: string) =
       match s.Split(",") with
