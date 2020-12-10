@@ -4,27 +4,18 @@ open Shared
 let map: bool [,] = Array2D.zeroCreate 1000 1000
 
 let True _ = true
-
-let turnOn (sX, sY) (fX, fY) =
-   map.[sX..fX, sY..fY] <- (map.[sX..fX, sY..fY] |> Array2D.map True)
-
 let False _ = false
-
-let turnOff (sX, sY) (fX, fY) =
-   map.[sX..fX, sY..fY] <- (map.[sX..fX, sY..fY] |> Array2D.map False)
-
 let XOR = (<>) true
 
-let toggle (sX, sY) (fX, fY) =
-   map.[sX..fX, sY..fY] <- (map.[sX..fX, sY..fY] |> Array2D.map XOR)
-
 for inst in instructions do
-   let fn =
+   let lightMapping =
       match inst.Code with
-      | Op.Code.On     -> turnOn
-      | Op.Code.Off    -> turnOff
-      | Op.Code.Toggle -> toggle
-   fn inst.Start inst.Finish
+      | Op.Code.On     -> True
+      | Op.Code.Off    -> False
+      | Op.Code.Toggle -> XOR
+   let (sX, sY) = inst.Start
+   let (fX, fY) = inst.Finish
+   map.[sX..fX, sY..fY] <- (map.[sX..fX, sY..fY] |> Array2D.map lightMapping)
 
 let run() =
    map
