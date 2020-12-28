@@ -6,7 +6,7 @@ module Instructions =
 
    // for my sake, an expression is either a reference or a value
    type Exp =
-   | Val    of uint
+   | Val    of uint16
    | Ref    of Symbol
 
    type RValue =
@@ -19,7 +19,7 @@ module Instructions =
 
    let parseUint (s: string) =
       try
-         Some <| uint s
+         Some (uint16 s)
       with _ ->
          None
 
