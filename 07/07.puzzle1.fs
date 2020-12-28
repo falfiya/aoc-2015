@@ -9,16 +9,19 @@ let addInstructionToMap (map: Bindings) (i: Instruction) =
    map.Add(i.LValue, i.RValue)
 
 let getSymbol (table: Bindings) =
-   let rec internalGetSymbol (sym: Symbol) (seen: Symbol Set) =
-      Console.WriteLine (Set.count seen)
-      if Set.contains sym seen then
-         failwith "AAAA"
+   let mutable workingBindings = table
+   let rec internalGetSymbol (i: int) (sym: Symbol) =
+      Console.WriteLine i |> ignore
       let inline getExp (e: Exp): Symbol =
          match e with
          | Val v -> v
-         | Ref r -> internalGetSymbol r (Set.add sym seen)
+         | Ref r ->
+            let res = internalGetSymbol (i + 1) r
+            workingBindings = workingBindings.Remove(sym).Add(sym, Init(Val(res)))
+               |> ignore
+            res
 
-      match table.TryFind sym with
+      match workingBindings.TryFind sym with
       | None -> failwith "Could not get " + sym
       | Some rval ->
          match rval with
@@ -28,10 +31,10 @@ let getSymbol (table: Bindings) =
          | Not  (a)    -> ~~~(getExp a)
          | LShift (a, amount) -> (getExp a) <<< (int32 <| getExp amount)
          | RShift (a, amount) -> (getExp a) >>> (int32 <| getExp amount)
-   internalGetSymbol
+   internalGetSymbol 1
 
 let run() =
    let map = instructions |> Array.fold addInstructionToMap Map.empty
    let wirea = "a" |> parseSymbol |> Option.get
-   getSymbol map wirea Set.empty
+   getSymbol map wirea
    |> Console.WriteLine
