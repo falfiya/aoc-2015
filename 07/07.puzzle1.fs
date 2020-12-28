@@ -1,4 +1,5 @@
 module Puzzle1
+open System
 open Shared
 open Shared.Instructions
 
@@ -8,11 +9,14 @@ let addInstructionToMap (map: Bindings) (i: Instruction) =
    map.Add(i.LValue, i.RValue)
 
 let getSymbol (table: Bindings) =
-   let rec internalGetSymbol (sym: Symbol) =
-      let inline getExp (e: Exp): uint16 =
+   let rec internalGetSymbol (sym: Symbol) (seen: Symbol Set) =
+      Console.WriteLine (Set.count seen)
+      if Set.contains sym seen then
+         failwith "AAAA"
+      let inline getExp (e: Exp): Symbol =
          match e with
          | Val v -> v
-         | Ref r -> internalGetSymbol r
+         | Ref r -> internalGetSymbol r (Set.add sym seen)
 
       match table.TryFind sym with
       | None -> failwith "Could not get " + sym
@@ -26,9 +30,8 @@ let getSymbol (table: Bindings) =
          | RShift (a, amount) -> (getExp a) >>> (int32 <| getExp amount)
    internalGetSymbol
 
-open System
 let run() =
    let map = instructions |> Array.fold addInstructionToMap Map.empty
    let wirea = "a" |> parseSymbol |> Option.get
-   getSymbol map wirea
+   getSymbol map wirea Set.empty
    |> Console.WriteLine
