@@ -337,3 +337,6 @@ ab AND ad -> ae
 NOT ac -> ad
 1 AND ht -> hu
 NOT hn -> ho
+
+# override b
+46065 -> b

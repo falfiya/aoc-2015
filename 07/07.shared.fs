@@ -78,7 +78,11 @@ module Gate =
 
 let filename = __SOURCE_DIRECTORY__ + "/wires.txt"
 
+let invalidLine (s: string) =
+   (s.StartsWith "#") || (s.Length = 0)
+
 let gates =
    filename
    |> File.ReadAllLines
+   |> Array.filter (not << invalidLine)
    |> Array.map Gate.fromString

@@ -6,6 +6,5 @@
    <ItemGroup>
       <Compile Include="07.shared.fs" />
       <Compile Include="07.puzzle1.fs" />
-      <Compile Include="07.main.fs" />
    </ItemGroup>
 </Project>

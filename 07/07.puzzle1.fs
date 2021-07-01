@@ -5,37 +5,45 @@ open Shared.Gate
 
 let wires     = new Dictionary<Wire, Circuit>()
 // what is upstream from the wire
-let wants  = new Dictionary<Wire, Wire HashSet>()
+let wants     = new Dictionary<Wire, Wire HashSet>()
 // what is downstream from the wire
 let gives     = new Dictionary<Wire, Wire List>()
+// wires that can be evaluated
 let evaluable = new Queue<Wire>()
+// values on the wire
 let onWire    = new Dictionary<Wire, Data>()
 
 let v (a: DataOrWire) =
    match a with
    | Data data -> data
-   | Wire wire -> onWire.[wire]
+   | Wire wire ->
+      if onWire.ContainsKey wire then
+         onWire.[wire]
+      else
+         failwithf "Value for wire %s has not been computed yet!" wire
 
-let run() =
-   for gate in gates do
-      let w = gate.Output
-      wires.[w] <- gate.Inputs
+for gate in gates do
+   let w = gate.Output
+   wires.[w] <- gate.Inputs
 
-      let reqs = gate.Inputs |> Circuit.requires
-      wants.[w] <- new HashSet<Wire>(reqs)
+   let reqs = gate.Inputs |> Circuit.requires
+   wants.[w] <- new HashSet<Wire>(reqs)
 
-      if wants.[w].Count = 0 then
-         // which implies evaluable
-         evaluable.Enqueue w
+   if wants.[w].Count = 0 then
+      // which implies evaluable
+      evaluable.Enqueue w
 
-      for want in reqs do
-         if not (gives.ContainsKey want) then
-            gives.[want] <- new List<Wire>()
-         gives.[want].Add w
+   for want in reqs do
+      if not (gives.ContainsKey want) then
+         gives.[want] <- new List<Wire>()
+      gives.[want].Add w
 
-   while evaluable.Count <> 0 do
-      let w = evaluable.Dequeue()
+while evaluable.Count <> 0 do
+   let w = evaluable.Dequeue()
 
+   try
+      // Just in case an unevaluable wire sneaks in.
+      // This would only happen if you had a duplicate entry in wires.txt.
       let res =
          match wires.[w] with
          | Direct a      -> v a
@@ -51,6 +59,6 @@ let run() =
             ignore ^| wants.[fed].Remove w
             if wants.[fed].Count = 0 then
                evaluable.Enqueue fed
+   with _ -> ()
 
-   for e in onWire do
-      printfn "%i is on wire %s" e.Value e.Key
+printfn "%i is on wire a" onWire.["a"]
