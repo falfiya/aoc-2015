@@ -57,7 +57,6 @@ module Gate =
       let requires (c: Circuit) =
          c |> inputs |> Array.map DataOrWire.getWireType |> Array.choose id
 
-
    let i = DataOrWire.fromString
    let fromString (s: string): Gate =
       let words = s.Split " "
