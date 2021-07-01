@@ -1,40 +1,43 @@
 module Puzzle1
-open System
+open System.Collections.Generic
 open Shared
-open Shared.Instructions
+open Shared.Gate
 
-type Bindings = Map<Symbol, RValue>
-
-let addInstructionToMap (map: Bindings) (i: Instruction) =
-   map.Add(i.LValue, i.RValue)
-
-let getSymbol (table: Bindings) =
-   let mutable workingBindings = table
-   let rec internalGetSymbol (i: int) (sym: Symbol) =
-      Console.WriteLine i |> ignore
-      let inline getExp (e: Exp): Symbol =
-         match e with
-         | Val v -> v
-         | Ref r ->
-            let res = internalGetSymbol (i + 1) r
-            workingBindings = workingBindings.Remove(sym).Add(sym, Init(Val(res)))
-               |> ignore
-            res
-
-      match workingBindings.TryFind sym with
-      | None -> failwith "Could not get " + sym
-      | Some rval ->
-         match rval with
-         | Init (a)    -> getExp a
-         | And  (a, b) -> (getExp a) &&& (getExp b)
-         | Or   (a, b) -> (getExp a) ||| (getExp b)
-         | Not  (a)    -> ~~~(getExp a)
-         | LShift (a, amount) -> (getExp a) <<< (int32 <| getExp amount)
-         | RShift (a, amount) -> (getExp a) >>> (int32 <| getExp amount)
-   internalGetSymbol 1
+let wires     = new Dictionary<Wire, Circuit<DataOrWire>>()
+let feeds     = new Dictionary<Wire, Wire List>()
+let evaluable = new Queue<Wire>()
+let onWire    = new Dictionary<Wire, Data>()
 
 let run() =
-   let map = instructions |> Array.fold addInstructionToMap Map.empty
-   let wirea = "a" |> parseSymbol |> Option.get
-   getSymbol map wirea
-   |> Console.WriteLine
+   for gate in gates do
+      wires.[gate.Output] <- gate.Inputs
+
+      let reqs = gate.Inputs |> Circuit.requires
+
+      if reqs.Length = 0 then
+         // which implies evaluable
+         evaluable.Enqueue gate.Output
+
+      for req in reqs do
+         if not (feeds.ContainsKey req) then
+            feeds.[req] <- new List<Wire>()
+         feeds.[req].Add gate.Output
+
+   while evaluable.Count <> 0 do
+      let w = evaluable.Dequeue()
+
+      let res =
+         match Circuit.toEvaluable wires.[w] with
+         | None -> failwith "Logic Error, haha yes."
+         | Some e ->
+            match e with
+            | Direct a      -> a
+            | Not    a      -> ~~~a
+            | And    (a, b) -> a &&& b
+            | Or     (a, b) -> a ||| b
+            | LShift (a, b) -> a <<< int32 b
+            | RShift (a, b) -> a >>> int32 b
+      onWire.[w] <- res
+
+      for fed in feeds.[w] do
+         let newCircuit = {wires.[fed] with // shit }
