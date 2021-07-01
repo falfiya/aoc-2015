@@ -3,41 +3,54 @@ open System.Collections.Generic
 open Shared
 open Shared.Gate
 
-let wires     = new Dictionary<Wire, Circuit<DataOrWire>>()
-let feeds     = new Dictionary<Wire, Wire List>()
+let wires     = new Dictionary<Wire, Circuit>()
+// what is upstream from the wire
+let wants  = new Dictionary<Wire, Wire HashSet>()
+// what is downstream from the wire
+let gives     = new Dictionary<Wire, Wire List>()
 let evaluable = new Queue<Wire>()
 let onWire    = new Dictionary<Wire, Data>()
 
+let v (a: DataOrWire) =
+   match a with
+   | Data data -> data
+   | Wire wire -> onWire.[wire]
+
 let run() =
    for gate in gates do
-      wires.[gate.Output] <- gate.Inputs
+      let w = gate.Output
+      wires.[w] <- gate.Inputs
 
       let reqs = gate.Inputs |> Circuit.requires
+      wants.[w] <- new HashSet<Wire>(reqs)
 
-      if reqs.Length = 0 then
+      if wants.[w].Count = 0 then
          // which implies evaluable
-         evaluable.Enqueue gate.Output
+         evaluable.Enqueue w
 
-      for req in reqs do
-         if not (feeds.ContainsKey req) then
-            feeds.[req] <- new List<Wire>()
-         feeds.[req].Add gate.Output
+      for want in reqs do
+         if not (gives.ContainsKey want) then
+            gives.[want] <- new List<Wire>()
+         gives.[want].Add w
 
    while evaluable.Count <> 0 do
       let w = evaluable.Dequeue()
 
       let res =
-         match Circuit.toEvaluable wires.[w] with
-         | None -> failwith "Logic Error, haha yes."
-         | Some e ->
-            match e with
-            | Direct a      -> a
-            | Not    a      -> ~~~a
-            | And    (a, b) -> a &&& b
-            | Or     (a, b) -> a ||| b
-            | LShift (a, b) -> a <<< int32 b
-            | RShift (a, b) -> a >>> int32 b
+         match wires.[w] with
+         | Direct a      -> v a
+         | Not    a      -> ~~~(v a)
+         | And    (a, b) -> (v a) &&& (v b)
+         | Or     (a, b) -> (v a) ||| (v b)
+         | LShift (a, b) -> (v a) <<< int32 (v b)
+         | RShift (a, b) -> (v a) >>> int32 (v b)
       onWire.[w] <- res
 
-      for fed in feeds.[w] do
-         let newCircuit = {wires.[fed] with // shit }
+      if gives.ContainsKey w then
+         for fed in gives.[w] do
+            ignore ^| wants.[fed].Remove w
+            if wants.[fed].Count = 0 then
+               evaluable.Enqueue fed
+
+   for e in onWire do
+      printfn "%i is on wire %s" e.Value e.Key
