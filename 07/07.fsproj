@@ -3,10 +3,9 @@
       <OutputType>Exe</OutputType>
       <TargetFramework>net5.0</TargetFramework>
    </PropertyGroup>
-
    <ItemGroup>
-      <Compile Include="07.Shared.fs"/>
-      <Compile Include="07.puzzle1.fs"/>
-      <Compile Include="07.main.fs"/>
+      <Compile Include="07.shared.fs" />
+      <Compile Include="07.puzzle1.fs" />
+      <Compile Include="07.main.fs" />
    </ItemGroup>
- </Project>
+</Project>

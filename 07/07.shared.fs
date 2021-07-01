@@ -1,74 +1,81 @@
-module Shared
-open System
+module rec Shared
+open System.IO
 
-module Instructions =
-   type Symbol = uint16
 
-   // for my sake, an expression is either a reference or a value
-   type Exp =
-   | Val    of uint16
-   | Ref    of Symbol
+module Util =
+   let parse parseFn (s: string) =
+      try Some (parseFn s)
+      with _ -> None
 
-   type RValue =
-   | Init   of Exp
-   | And    of Exp * Exp
-   | Or     of Exp * Exp
-   | Not    of Exp
-   | LShift of Exp * amount: Exp
-   | RShift of Exp * amount: Exp
+module Option =
+   let unwrap (msg: string) (o: 'a Option) =
+      match o with
+      | Some a -> a
+      | None -> failwith msg
 
-   let parseUint (s: string) =
-      try
-         Some (uint16 s)
-      with _ ->
-         None
+module Gate =
+   type DataType = uint16
+   module DataType =
+      let fromString = Util.parse DataType.Parse
 
-   let parseSymbol (s: string): Symbol Option =
-      let chars = s |> Seq.map uint16 |> Seq.toArray
-      match chars.Length with
-      | 1 -> Some (chars.[0] <<< 8)
-      | 2 -> Some (chars.[0] <<< 8 ||| chars.[1])
-      | _ -> None
+   type WireType = uint16
+   module WireType =
+      let fromString (s: string): WireType Option =
+         let chars = s |> Seq.map uint16 |> Seq.toArray
+         match chars.Length with
+         | 1 -> Some (chars.[0] <<< 8)
+         | 2 -> Some (chars.[0] <<< 8 ||| chars.[1])
+         | _ -> None
 
-   let Exp (s: string) =
-      match parseUint s with
-      | Some thing -> Val thing
-      | None ->
-         match parseSymbol s with
-         | Some symbol -> Ref symbol
-         | None -> failwith ("No matches found for " + s)
+   type In =
+   | Data of DataType
+   | Wire of WireType
+   module In =
+      let fromString (s: string): In =
+         match DataType.fromString s with
+         | Some data -> Data data
+         | None ->
+            match WireType.fromString s with
+            | Some wire -> Wire wire
+            | None -> failwith "Could not parse input!"
 
-   type Instruction = {
-      LValue: Symbol;
-      RValue: RValue;
-   }
+   type Circuit =
+   | Direct of In
+   | Not    of In
+   | And    of In * In
+   | Or     of In * In
+   | LShift of what: In * by: In
+   | RShift of what: In * by: In
 
-   let fromString (s: string) =
-      let revWords = s.Split " " |> Array.rev
+[<Struct>]
+type Gate = {Inputs: Gate.Circuit; Output: Gate.WireType}
 
-      if revWords.Length < 3 then
-         failwith "There must be at least 3 words per instruction"
+module Gate =
+   open Gate
+   let i = In.fromString
+   let fromString (s: string): Gate =
+      let words = s.Split ""
+      let last  = words.Length - 1
+      let circuit =
+         match words.[..last - 1] with
+         | [|a|]              -> Direct (i a)
+         | [|"NOT"; a|]       -> Not    (i a)
+         | [|a; "AND"; b|]    -> And    (i a, i b)
+         | [|a; "OR" ; b|]    -> Or     (i a, i b)
+         | [|a; "LSHIFT"; b|] -> LShift (i a, i b)
+         | [|a; "RSHIFT"; b|] -> RShift (i a, i b)
+         | _ -> failwith "Unknown wire type!"
 
-      let symbol =
-         match parseSymbol revWords.[0] with
-         | Some symbol -> symbol
-         | None -> failwith ("Invalid symbol: " + revWords.[0])
+      let output =
+         words.[last]
+         |> WireType.fromString
+         |> Option.unwrap "Could not parse output!"
 
-      let rhs =
-         match revWords.[2..] with
-         | [| a |]              -> Init   (Exp a)        // a
-         | [| a; "NOT" |]       -> Not    (Exp a)        // NOT a
-         | [| b; "AND"; a |]    -> And    (Exp a, Exp b) // a AND b
-         | [| b; "OR" ; a |]    -> Or     (Exp a, Exp b) // a OR  b
-         | [| b; "LSHIFT"; a |] -> LShift (Exp a, Exp b) // a LSHIFT b
-         | [| b; "RSHIFT"; a |] -> RShift (Exp a, Exp b) // a RSHIFT b
-         | _ -> failwith "Unknown instruction type"
-
-      { LValue = symbol; RValue = rhs }
+      {Inputs = circuit; Output = output}
 
 let filename = __SOURCE_DIRECTORY__ + "/wires.txt"
 
 let instructions =
    filename
-   |> IO.File.ReadAllLines
-   |> Array.map Instructions.fromString
+   |> File.ReadAllLines
+   |> Array.map Gate.fromString
